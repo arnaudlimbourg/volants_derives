@@ -1,0 +1,941 @@
+{
+  "settings": {
+    "ouvert": true,
+    "titre": "Boutique des Français Volants",
+    "intro": "Pour s'équiper aux couleurs du club, choisissez vos articles. Pour chaque tee-shirt Volants Solidaires acheté, 3 € sont reversés à l'association CAMI.",
+    "dateCloture": "15 octobre",
+    "lienPaiement": "https://www.onparticipe.fr/c/B11D7skx",
+    "messagePaiement": "Attention : toute commande non réglée ne sera pas comptabilisée. Merci d'avance !"
+  },
+  "categories": [
+    "EDG",
+    "U7",
+    "U9",
+    "U11",
+    "U13",
+    "U15",
+    "U18",
+    "Féminines",
+    "Loisirs",
+    "Non concerné"
+  ],
+  "roles": [
+    "Parent de joueur",
+    "Joueur",
+    "Autre"
+  ],
+  "products": [
+    {
+      "nom": "Short",
+      "section": "Textile d'équipe",
+      "sizes": [
+        {
+          "label": "6-8 ans",
+          "price": 25
+        },
+        {
+          "label": "8-10 ans",
+          "price": 25
+        },
+        {
+          "label": "10-12 ans",
+          "price": 25
+        },
+        {
+          "label": "12-14 ans",
+          "price": 25
+        },
+        {
+          "label": "Adulte - XS",
+          "price": 30
+        },
+        {
+          "label": "Adulte - S",
+          "price": 30
+        },
+        {
+          "label": "Adulte - M",
+          "price": 30
+        },
+        {
+          "label": "Adulte - L",
+          "price": 30
+        },
+        {
+          "label": "Adulte - XL",
+          "price": 30
+        },
+        {
+          "label": "Adulte - XXL",
+          "price": 30
+        },
+        {
+          "label": "Adulte - 3XL",
+          "price": 30
+        }
+      ],
+      "image": "",
+      "note": ""
+    },
+    {
+      "nom": "Sweat",
+      "section": "Textile d'équipe",
+      "sizes": [
+        {
+          "label": "3-4 ans",
+          "price": 25
+        },
+        {
+          "label": "5-6 ans",
+          "price": 25
+        },
+        {
+          "label": "7-8 ans",
+          "price": 25
+        },
+        {
+          "label": "9-11 ans",
+          "price": 25
+        },
+        {
+          "label": "12-13 ans",
+          "price": 25
+        },
+        {
+          "label": "Adulte - XS",
+          "price": 40
+        },
+        {
+          "label": "Adulte - S",
+          "price": 40
+        },
+        {
+          "label": "Adulte - M",
+          "price": 40
+        },
+        {
+          "label": "Adulte - L",
+          "price": 40
+        },
+        {
+          "label": "Adulte - XL",
+          "price": 40
+        },
+        {
+          "label": "Adulte - XXL",
+          "price": 40
+        },
+        {
+          "label": "Adulte - 3XL",
+          "price": 40
+        },
+        {
+          "label": "Adulte - 4XL",
+          "price": 40
+        }
+      ],
+      "image": "",
+      "note": ""
+    },
+    {
+      "nom": "Softshell",
+      "section": "Autres textiles",
+      "sizes": [
+        {
+          "label": "6-8 ans",
+          "price": 60
+        },
+        {
+          "label": "8-10 ans",
+          "price": 60
+        },
+        {
+          "label": "10-12 ans",
+          "price": 60
+        },
+        {
+          "label": "12-14 ans",
+          "price": 60
+        },
+        {
+          "label": "Adulte - S",
+          "price": 60
+        },
+        {
+          "label": "Adulte - M",
+          "price": 60
+        },
+        {
+          "label": "Adulte - L",
+          "price": 60
+        },
+        {
+          "label": "Adulte - XL",
+          "price": 60
+        },
+        {
+          "label": "Adulte - XXL",
+          "price": 60
+        },
+        {
+          "label": "Adulte - 3XL",
+          "price": 60
+        }
+      ],
+      "image": "",
+      "note": ""
+    },
+    {
+      "nom": "Doudoune",
+      "section": "Autres textiles",
+      "sizes": [
+        {
+          "label": "6-8 ans",
+          "price": 55
+        },
+        {
+          "label": "8-10 ans",
+          "price": 55
+        },
+        {
+          "label": "10-12 ans",
+          "price": 55
+        },
+        {
+          "label": "12-14 ans",
+          "price": 55
+        },
+        {
+          "label": "Adulte - S",
+          "price": 65
+        },
+        {
+          "label": "Adulte - M",
+          "price": 65
+        },
+        {
+          "label": "Adulte - L",
+          "price": 65
+        },
+        {
+          "label": "Adulte - XL",
+          "price": 65
+        },
+        {
+          "label": "Adulte - XXL",
+          "price": 65
+        },
+        {
+          "label": "Adulte - 3XL",
+          "price": 65
+        },
+        {
+          "label": "Adulte - 4XL",
+          "price": 65
+        }
+      ],
+      "image": "",
+      "note": ""
+    },
+    {
+      "nom": "Tee-shirt col rond bleu",
+      "section": "Autres textiles",
+      "sizes": [
+        {
+          "label": "3-4 ans",
+          "price": 15
+        },
+        {
+          "label": "5-6 ans",
+          "price": 15
+        },
+        {
+          "label": "7-8 ans",
+          "price": 15
+        },
+        {
+          "label": "9-11 ans",
+          "price": 15
+        },
+        {
+          "label": "12-13 ans",
+          "price": 15
+        },
+        {
+          "label": "Adulte - XS",
+          "price": 15
+        },
+        {
+          "label": "Adulte - S",
+          "price": 15
+        },
+        {
+          "label": "Adulte - M",
+          "price": 15
+        },
+        {
+          "label": "Adulte - L",
+          "price": 15
+        },
+        {
+          "label": "Adulte - XL",
+          "price": 15
+        },
+        {
+          "label": "Adulte - XXL",
+          "price": 15
+        },
+        {
+          "label": "Adulte - 3XL",
+          "price": 15
+        },
+        {
+          "label": "Adulte - 4XL",
+          "price": 15
+        },
+        {
+          "label": "Adulte - 5XL",
+          "price": 15
+        }
+      ],
+      "image": "",
+      "note": ""
+    },
+    {
+      "nom": "Tee-shirt col rond blanc",
+      "section": "Autres textiles",
+      "sizes": [
+        {
+          "label": "3-4 ans",
+          "price": 15
+        },
+        {
+          "label": "5-6 ans",
+          "price": 15
+        },
+        {
+          "label": "7-8 ans",
+          "price": 15
+        },
+        {
+          "label": "9-11 ans",
+          "price": 15
+        },
+        {
+          "label": "12-13 ans",
+          "price": 15
+        },
+        {
+          "label": "Adulte - XS",
+          "price": 15
+        },
+        {
+          "label": "Adulte - S",
+          "price": 15
+        },
+        {
+          "label": "Adulte - M",
+          "price": 15
+        },
+        {
+          "label": "Adulte - L",
+          "price": 15
+        },
+        {
+          "label": "Adulte - XL",
+          "price": 15
+        },
+        {
+          "label": "Adulte - XXL",
+          "price": 15
+        },
+        {
+          "label": "Adulte - 3XL",
+          "price": 15
+        },
+        {
+          "label": "Adulte - 4XL",
+          "price": 15
+        },
+        {
+          "label": "Adulte - 5XL",
+          "price": 15
+        }
+      ],
+      "image": "",
+      "note": ""
+    },
+    {
+      "nom": "Tee-shirt col V blanc",
+      "section": "Autres textiles",
+      "sizes": [
+        {
+          "label": "Adulte - S",
+          "price": 18
+        },
+        {
+          "label": "Adulte - M",
+          "price": 18
+        },
+        {
+          "label": "Adulte - L",
+          "price": 18
+        },
+        {
+          "label": "Adulte - XL",
+          "price": 18
+        },
+        {
+          "label": "Adulte - XXL",
+          "price": 18
+        },
+        {
+          "label": "Adulte - 3XL",
+          "price": 18
+        }
+      ],
+      "image": "",
+      "note": ""
+    },
+    {
+      "nom": "Tee-shirt sport bleu",
+      "section": "Autres textiles",
+      "sizes": [
+        {
+          "label": "3-4 ans",
+          "price": 15
+        },
+        {
+          "label": "5-6 ans",
+          "price": 15
+        },
+        {
+          "label": "7-8 ans",
+          "price": 15
+        },
+        {
+          "label": "9-11 ans",
+          "price": 15
+        },
+        {
+          "label": "12-13 ans",
+          "price": 15
+        },
+        {
+          "label": "Adulte - XS",
+          "price": 15
+        },
+        {
+          "label": "Adulte - S",
+          "price": 15
+        },
+        {
+          "label": "Adulte - M",
+          "price": 15
+        },
+        {
+          "label": "Adulte - L",
+          "price": 15
+        },
+        {
+          "label": "Adulte - XL",
+          "price": 15
+        },
+        {
+          "label": "Adulte - XXL",
+          "price": 15
+        },
+        {
+          "label": "Adulte - 3XL",
+          "price": 15
+        }
+      ],
+      "image": "",
+      "note": ""
+    },
+    {
+      "nom": "Tee-shirt sport blanc",
+      "section": "Autres textiles",
+      "sizes": [
+        {
+          "label": "3-4 ans",
+          "price": 15
+        },
+        {
+          "label": "5-6 ans",
+          "price": 15
+        },
+        {
+          "label": "7-8 ans",
+          "price": 15
+        },
+        {
+          "label": "9-11 ans",
+          "price": 15
+        },
+        {
+          "label": "12-13 ans",
+          "price": 15
+        },
+        {
+          "label": "Adulte - XS",
+          "price": 15
+        },
+        {
+          "label": "Adulte - S",
+          "price": 15
+        },
+        {
+          "label": "Adulte - M",
+          "price": 15
+        },
+        {
+          "label": "Adulte - L",
+          "price": 15
+        },
+        {
+          "label": "Adulte - XL",
+          "price": 15
+        },
+        {
+          "label": "Adulte - XXL",
+          "price": 15
+        },
+        {
+          "label": "Adulte - 3XL",
+          "price": 15
+        }
+      ],
+      "image": "",
+      "note": ""
+    },
+    {
+      "nom": "Casquette",
+      "section": "Autres produits dérivés",
+      "sizes": [
+        {
+          "label": "Taille unique",
+          "price": 25
+        }
+      ],
+      "image": "",
+      "note": ""
+    },
+    {
+      "nom": "Bonnet",
+      "section": "Autres produits dérivés",
+      "sizes": [
+        {
+          "label": "Taille unique",
+          "price": 20
+        }
+      ],
+      "image": "",
+      "note": ""
+    },
+    {
+      "nom": "Sac à dos fin",
+      "section": "Autres produits dérivés",
+      "sizes": [
+        {
+          "label": "Taille unique",
+          "price": 7
+        }
+      ],
+      "image": "",
+      "note": ""
+    },
+    {
+      "nom": "Claquettes bleues logo blanc",
+      "section": "Autres produits dérivés",
+      "sizes": [
+        {
+          "label": "31-32",
+          "price": 20
+        },
+        {
+          "label": "33-34",
+          "price": 20
+        },
+        {
+          "label": "35-36",
+          "price": 20
+        },
+        {
+          "label": "37-38",
+          "price": 20
+        },
+        {
+          "label": "39-40",
+          "price": 20
+        },
+        {
+          "label": "41-42",
+          "price": 20
+        },
+        {
+          "label": "43-44",
+          "price": 20
+        },
+        {
+          "label": "45-46",
+          "price": 20
+        },
+        {
+          "label": "47-48",
+          "price": 20
+        }
+      ],
+      "image": "",
+      "note": ""
+    },
+    {
+      "nom": "Claquettes blanches logo bleu",
+      "section": "Autres produits dérivés",
+      "sizes": [
+        {
+          "label": "31-32",
+          "price": 20
+        },
+        {
+          "label": "33-34",
+          "price": 20
+        },
+        {
+          "label": "35-36",
+          "price": 20
+        },
+        {
+          "label": "37-38",
+          "price": 20
+        },
+        {
+          "label": "39-40",
+          "price": 20
+        },
+        {
+          "label": "41-42",
+          "price": 20
+        },
+        {
+          "label": "43-44",
+          "price": 20
+        },
+        {
+          "label": "45-46",
+          "price": 20
+        },
+        {
+          "label": "47-48",
+          "price": 20
+        }
+      ],
+      "image": "",
+      "note": ""
+    },
+    {
+      "nom": "Claquettes roses logo blanc",
+      "section": "Autres produits dérivés",
+      "sizes": [
+        {
+          "label": "31-32",
+          "price": 20
+        },
+        {
+          "label": "33-34",
+          "price": 20
+        },
+        {
+          "label": "35-36",
+          "price": 20
+        },
+        {
+          "label": "37-38",
+          "price": 20
+        },
+        {
+          "label": "39-40",
+          "price": 20
+        },
+        {
+          "label": "41-42",
+          "price": 20
+        },
+        {
+          "label": "43-44",
+          "price": 20
+        },
+        {
+          "label": "45-46",
+          "price": 20
+        }
+      ],
+      "image": "",
+      "note": ""
+    },
+    {
+      "nom": "Octobre Rose blanc",
+      "section": "Les Volants Solidaires",
+      "sizes": [
+        {
+          "label": "XS",
+          "price": 15
+        },
+        {
+          "label": "S",
+          "price": 15
+        },
+        {
+          "label": "M",
+          "price": 15
+        },
+        {
+          "label": "L",
+          "price": 15
+        },
+        {
+          "label": "XL",
+          "price": 15
+        },
+        {
+          "label": "XXL",
+          "price": 15
+        },
+        {
+          "label": "3XL",
+          "price": 15
+        },
+        {
+          "label": "4XL",
+          "price": 15
+        },
+        {
+          "label": "5XL",
+          "price": 15
+        }
+      ],
+      "image": "",
+      "note": "3 € reversés à l'association CAMI"
+    },
+    {
+      "nom": "Octobre Rose bleu",
+      "section": "Les Volants Solidaires",
+      "sizes": [
+        {
+          "label": "XS",
+          "price": 15
+        },
+        {
+          "label": "S",
+          "price": 15
+        },
+        {
+          "label": "M",
+          "price": 15
+        },
+        {
+          "label": "L",
+          "price": 15
+        },
+        {
+          "label": "XL",
+          "price": 15
+        },
+        {
+          "label": "XXL",
+          "price": 15
+        },
+        {
+          "label": "3XL",
+          "price": 15
+        },
+        {
+          "label": "4XL",
+          "price": 15
+        },
+        {
+          "label": "5XL",
+          "price": 15
+        }
+      ],
+      "image": "",
+      "note": "3 € reversés à l'association CAMI"
+    },
+    {
+      "nom": "Octobre Rose rose",
+      "section": "Les Volants Solidaires",
+      "sizes": [
+        {
+          "label": "XS",
+          "price": 15
+        },
+        {
+          "label": "S",
+          "price": 15
+        },
+        {
+          "label": "M",
+          "price": 15
+        },
+        {
+          "label": "L",
+          "price": 15
+        },
+        {
+          "label": "XL",
+          "price": 15
+        },
+        {
+          "label": "XXL",
+          "price": 15
+        },
+        {
+          "label": "3XL",
+          "price": 15
+        },
+        {
+          "label": "4XL",
+          "price": 15
+        },
+        {
+          "label": "5XL",
+          "price": 15
+        }
+      ],
+      "image": "",
+      "note": "3 € reversés à l'association CAMI"
+    },
+    {
+      "nom": "Movember blanc",
+      "section": "Les Volants Solidaires",
+      "sizes": [
+        {
+          "label": "XS",
+          "price": 15
+        },
+        {
+          "label": "S",
+          "price": 15
+        },
+        {
+          "label": "M",
+          "price": 15
+        },
+        {
+          "label": "L",
+          "price": 15
+        },
+        {
+          "label": "XL",
+          "price": 15
+        },
+        {
+          "label": "XXL",
+          "price": 15
+        },
+        {
+          "label": "3XL",
+          "price": 15
+        },
+        {
+          "label": "4XL",
+          "price": 15
+        },
+        {
+          "label": "5XL",
+          "price": 15
+        }
+      ],
+      "image": "",
+      "note": "3 € reversés à l'association CAMI"
+    },
+    {
+      "nom": "Movember noir",
+      "section": "Les Volants Solidaires",
+      "sizes": [
+        {
+          "label": "XS",
+          "price": 15
+        },
+        {
+          "label": "S",
+          "price": 15
+        },
+        {
+          "label": "M",
+          "price": 15
+        },
+        {
+          "label": "L",
+          "price": 15
+        },
+        {
+          "label": "XL",
+          "price": 15
+        },
+        {
+          "label": "XXL",
+          "price": 15
+        },
+        {
+          "label": "3XL",
+          "price": 15
+        },
+        {
+          "label": "4XL",
+          "price": 15
+        },
+        {
+          "label": "5XL",
+          "price": 15
+        }
+      ],
+      "image": "",
+      "note": "3 € reversés à l'association CAMI"
+    },
+    {
+      "nom": "Movember gris",
+      "section": "Les Volants Solidaires",
+      "sizes": [
+        {
+          "label": "XS",
+          "price": 15
+        },
+        {
+          "label": "S",
+          "price": 15
+        },
+        {
+          "label": "M",
+          "price": 15
+        },
+        {
+          "label": "L",
+          "price": 15
+        },
+        {
+          "label": "XL",
+          "price": 15
+        },
+        {
+          "label": "XXL",
+          "price": 15
+        },
+        {
+          "label": "3XL",
+          "price": 15
+        },
+        {
+          "label": "4XL",
+          "price": 15
+        },
+        {
+          "label": "5XL",
+          "price": 15
+        }
+      ],
+      "image": "",
+      "note": "3 € reversés à l'association CAMI"
+    }
+  ]
+}

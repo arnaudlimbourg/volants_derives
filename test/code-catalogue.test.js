@@ -100,3 +100,10 @@ test('doGet renvoie le catalogue en JSON', () => {
   const output = gas.doGet();
   assert.deepEqual(JSON.parse(output.text), plain(gas.getCatalogue()));
 });
+
+test('fixtures/catalogue.json correspond au catalogue de départ (npm run fixture)', async () => {
+  const fs = await import('node:fs');
+  const fixture = JSON.parse(fs.readFileSync(new URL('../fixtures/catalogue.json', import.meta.url), 'utf8'));
+  const { gas } = setup();
+  assert.deepEqual(fixture, plain(gas.getCatalogue()));
+});
