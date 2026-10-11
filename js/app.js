@@ -27,7 +27,12 @@ function el(tag, attrs = {}, ...children) {
     else if (key === 'class') node.className = value;
     else node.setAttribute(key, value === true ? '' : value);
   }
-  node.append(...children.flat().filter((child) => child != null && child !== false));
+  return setChildren(node, ...children);
+}
+
+/** Comme replaceChildren, mais ignore null et false (replaceChildren afficherait « null »). */
+function setChildren(node, ...children) {
+  node.replaceChildren(...children.flat().filter((child) => child != null && child !== false));
   return node;
 }
 
@@ -77,8 +82,9 @@ function toast(message) {
   toastTimer = setTimeout(() => { node.hidden = true; }, 2500);
 }
 
-function showStatus(message, { retry = false } = {}) {
-  $('#status').replaceChildren(
+function showStatus(message, { retry = false, loading = false } = {}) {
+  setChildren($('#status'),
+    loading ? el('span', { class: 'spinner', 'aria-hidden': 'true' }) : null,
     el('p', {}, message),
     retry ? el('button', { type: 'button', class: 'button', onclick: () => location.reload() }, 'Réessayer') : null,
   );
@@ -88,7 +94,7 @@ function showStatus(message, { retry = false } = {}) {
 
 async function start() {
   restore();
-  showStatus('Chargement de la boutique…');
+  showStatus('Chargement de la boutique…', { loading: true });
   try {
     state.catalogue = await loadCatalogue();
   } catch (err) {
@@ -423,7 +429,7 @@ function showConfirmation(result) {
   $('#boutique').hidden = true;
 
   const { lienPaiement, messagePaiement } = state.catalogue.settings;
-  $('#confirmation').replaceChildren(
+  setChildren($('#confirmation'),
     el('h2', {}, 'Commande enregistrée'),
     el('p', { class: 'order-number' }, result.orderNumber),
     el('p', {}, result.emailSent
