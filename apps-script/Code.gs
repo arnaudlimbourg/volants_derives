@@ -3,6 +3,9 @@
  *
  * À coller dans la feuille Google du club : Extensions → Apps Script.
  * Installation et déploiement : voir SETUP.md.
+ *
+ * @OnlyCurrentDoc
+ * Limite l'autorisation demandée à Google à cette seule feuille, au lieu de « toutes vos feuilles ».
  */
 
 const SHEETS = {
