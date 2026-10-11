@@ -69,6 +69,7 @@ export function createGas() {
   const properties = new Map();
   const mails = [];
   const warnings = [];
+  const cache = new Map();
   let mailFails = false;
 
   const spreadsheet = {
@@ -83,6 +84,12 @@ export function createGas() {
   const context = vm.createContext({
     SpreadsheetApp: { getActiveSpreadsheet: () => spreadsheet, flush() {} },
     LockService: { getScriptLock: () => ({ waitLock() {}, releaseLock() {} }) },
+    CacheService: {
+      getScriptCache: () => ({
+        get: (key) => (cache.has(key) ? cache.get(key) : null),
+        put: (key, value) => cache.set(key, String(value)),
+      }),
+    },
     PropertiesService: {
       getScriptProperties: () => ({
         getProperty: (key) => (properties.has(key) ? properties.get(key) : null),
@@ -110,6 +117,7 @@ export function createGas() {
     mails,
     warnings,
     setMailFailure: (fails) => { mailFails = fails; },
+    expireCache: () => cache.clear(),
   };
 }
 

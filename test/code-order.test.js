@@ -217,3 +217,23 @@ test('doPost : JSON invalide, erreur interne, commande valide', () => {
   assert.equal(broken.error, 'server');
   assert.match(broken.message, /réessayez/);
 });
+
+test('limite anti-abus : au-delà de 30 commandes en 10 minutes, on demande de réessayer', () => {
+  const { gas, orderRows, mails, expireCache } = setup();
+  for (let i = 1; i <= 30; i += 1) {
+    assert.equal(place(gas, validOrder({ clientId: `client-${i}` })).ok, true, `commande ${i}`);
+  }
+  const blocked = place(gas, validOrder({ clientId: 'client-31' }));
+  assert.equal(blocked.ok, false);
+  assert.equal(blocked.error, 'busy');
+  assert.match(blocked.message, /réessayez dans quelques minutes/);
+  assert.equal(orderRows().length, 60);
+  assert.equal(mails.length, 30);
+
+  // Un renvoi d'une commande déjà enregistrée n'est pas bloqué et ne compte pas.
+  assert.equal(place(gas, validOrder({ clientId: 'client-5' })).duplicate, true);
+
+  // Fenêtre suivante : de nouveau possible.
+  expireCache();
+  assert.equal(place(gas, validOrder({ clientId: 'client-31' })).orderNumber, 'V-0031');
+});

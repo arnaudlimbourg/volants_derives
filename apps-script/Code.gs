@@ -21,6 +21,9 @@ const ROLES = ['Parent de joueur', 'Joueur', 'Autre'];
 const ONE_SIZE = 'Taille unique';
 const MAX_QUANTITY = 20;
 const MAX_LINES = 50;
+// Anti-abus : au plus 30 nouvelles commandes par tranche de 10 minutes, tous parents confondus.
+// Protège la feuille et le quota d'emails si quelqu'un envoie des commandes en masse.
+const RATE_LIMIT = { orders: 30, minutes: 10 };
 
 // Colonnes : A Date · B N° commande · C Client ID · D Parent · E Rôle · F Téléphone · G Email
 //            H Joueur · I Catégorie · J Produit · K Taille · L Quantité · M Prix unitaire · N Total ligne · O Payé
@@ -184,6 +187,13 @@ function placeOrder(order) {
       // même si le panier a changé depuis. L'email est déjà parti à ce moment-là.
       return { ok: true, ...existing, emailSent: true, duplicate: true };
     }
+    if (!takeRateLimitSlot_()) {
+      return {
+        ok: false,
+        error: 'busy',
+        message: 'Beaucoup de commandes en ce moment : votre panier est conservé, réessayez dans quelques minutes.',
+      };
+    }
     orderNumber = nextOrderNumber_();
     appendOrder_(orderNumber, clientId, priced);
     // Sans flush, une requête concurrente peut lire la feuille avant l'écriture et dupliquer la commande.
@@ -274,6 +284,17 @@ function findOrder_(clientId) {
   }));
   const total = lines.reduce((sum, line) => sum + line.total, 0);
   return { orderNumber: String(rows[0][1]), lines, total };
+}
+
+/** Compte une commande dans la tranche de 10 minutes en cours ; false si la limite est atteinte. */
+function takeRateLimitSlot_() {
+  const cache = CacheService.getScriptCache();
+  const windowMs = RATE_LIMIT.minutes * 60 * 1000;
+  const key = `commandes_${Math.floor(Date.now() / windowMs)}`;
+  const count = Number(cache.get(key) || 0);
+  if (count >= RATE_LIMIT.orders) return false;
+  cache.put(key, String(count + 1), RATE_LIMIT.minutes * 60 * 2);
+  return true;
 }
 
 /** Compteur dans les propriétés du script : il continue même quand « Commandes » est archivé. */
