@@ -16,6 +16,8 @@ const SHEETS = {
 const PRODUITS_HEADERS = ['Actif', 'Section', 'Nom', 'Prix', 'Tailles', 'Image', 'Note'];
 const ROLES = ['Parent de joueur', 'Joueur', 'Autre'];
 const ONE_SIZE = 'Taille unique';
+const MAX_QUANTITY = 20;
+const MAX_LINES = 50;
 
 // Colonnes : A Date · B N° commande · C Client ID · D Parent · E Rôle · F Téléphone · G Email
 //            H Joueur · I Catégorie · J Produit · K Taille · L Quantité · M Prix unitaire · N Total ligne · O Payé
@@ -33,6 +35,21 @@ const RECAP_PAR_FAMILLE = '=QUERY(Commandes!A:O, "select B, D, F, G, sum(N) wher
 
 function doGet() {
   return json_(getCatalogue());
+}
+
+function doPost(e) {
+  let order;
+  try {
+    order = JSON.parse(e.postData.contents);
+  } catch (err) {
+    return json_({ ok: false, error: 'invalid', message: 'Requête invalide.' });
+  }
+  try {
+    return json_(placeOrder(order));
+  } catch (err) {
+    console.error(err);
+    return json_({ ok: false, error: 'server', message: 'Erreur du serveur, réessayez dans un instant.' });
+  }
 }
 
 function json_(data) {
@@ -117,6 +134,195 @@ function imageUrl(url) {
   if (!/drive\.google\.com/.test(value)) return value;
   const match = value.match(/\/d\/([\w-]+)/) || value.match(/[?&]id=([\w-]+)/);
   return match ? `https://drive.google.com/thumbnail?id=${match[1]}&sz=w800` : value;
+}
+
+// ---------- Commandes ----------
+
+function placeOrder(order) {
+  // Pot de miel : seul un robot remplit ce champ caché. On lui fait croire que tout va bien.
+  if (clean_(order.website)) return { ok: true, orderNumber: 'V-0000', lines: [], total: 0, emailSent: false };
+
+  const catalogue = getCatalogue();
+  if (!catalogue.settings.ouvert) return { ok: false, error: 'closed', message: 'Les commandes sont fermées.' };
+
+  const clientId = clean_(order.clientId);
+  const priced = priceOrder(order, catalogue);
+  if (!clientId) priced.errors.push('Identifiant de commande manquant.');
+  if (priced.errors.length) {
+    return { ok: false, error: 'invalid', message: priced.errors.join(' '), errors: priced.errors };
+  }
+  if (priced.unavailable.length) {
+    return {
+      ok: false,
+      error: 'unavailable',
+      message: 'Certains articles ne sont plus disponibles : retirez-les du panier puis validez à nouveau.',
+      unavailable: priced.unavailable,
+    };
+  }
+
+  const lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  let orderNumber;
+  try {
+    const existing = findOrderNumber_(clientId);
+    if (existing) {
+      // Même panier renvoyé (double clic, réseau coupé) : l'email est déjà parti la première fois.
+      return { ok: true, orderNumber: existing, lines: priced.lines, total: priced.total, emailSent: true, duplicate: true };
+    }
+    orderNumber = nextOrderNumber_();
+    appendOrder_(orderNumber, clientId, priced);
+  } finally {
+    lock.releaseLock();
+  }
+  const emailSent = sendConfirmation_(orderNumber, priced, catalogue.settings);
+  return { ok: true, orderNumber, lines: priced.lines, total: priced.total, emailSent };
+}
+
+/** Valide la commande et recalcule tous les prix depuis le catalogue (ceux du navigateur sont ignorés). */
+function priceOrder(order, catalogue) {
+  const errors = [];
+  const unavailable = [];
+  const input = order.parent || {};
+  const parent = {
+    nom: clean_(input.nom),
+    role: clean_(input.role),
+    telephone: clean_(input.telephone),
+    email: clean_(input.email).toLowerCase(),
+  };
+  if (!parent.nom) errors.push('Indiquez votre nom.');
+  if (ROLES.indexOf(parent.role) === -1) errors.push('Rôle invalide.');
+  if (parent.telephone.replace(/\D/g, '').length < 8) errors.push('Numéro de téléphone invalide.');
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(parent.email)) errors.push('Adresse email invalide.');
+
+  const joueurs = (order.joueurs || [])
+    .map((joueur) => ({ nom: clean_(joueur.nom), categorie: clean_(joueur.categorie) }))
+    .filter((joueur) => joueur.nom);
+  joueurs.forEach((joueur) => {
+    if (catalogue.categories.indexOf(joueur.categorie) === -1) errors.push(`Choisissez la catégorie de ${joueur.nom}.`);
+  });
+
+  const lignes = order.lignes || [];
+  if (lignes.length === 0) errors.push('Le panier est vide.');
+  if (lignes.length > MAX_LINES) errors.push(`Pas plus de ${MAX_LINES} articles différents par commande.`);
+
+  const lines = [];
+  lignes.forEach((ligne) => {
+    const produit = clean_(ligne.produit);
+    const taille = clean_(ligne.taille);
+    const nomJoueur = clean_(ligne.joueur);
+    const quantite = Number(ligne.quantite);
+    if (!Number.isInteger(quantite) || quantite < 1 || quantite > MAX_QUANTITY) {
+      errors.push(`Quantité invalide pour ${produit}.`);
+      return;
+    }
+    // Un joueur vide : l'article est pour le parent lui-même.
+    const joueur = nomJoueur ? joueurs.find((j) => j.nom === nomJoueur) : { nom: '', categorie: '' };
+    if (!joueur) {
+      errors.push(`Joueur inconnu : ${nomJoueur}.`);
+      return;
+    }
+    const product = catalogue.products.find((p) => p.nom === produit);
+    const size = product && product.sizes.find((s) => s.label === taille);
+    if (!size) {
+      unavailable.push({ produit, taille });
+      return;
+    }
+    lines.push({
+      joueur: joueur.nom,
+      categorie: joueur.categorie,
+      produit,
+      taille,
+      quantite,
+      prixUnitaire: size.price,
+      total: size.price * quantite,
+    });
+  });
+
+  const total = lines.reduce((sum, line) => sum + line.total, 0);
+  return { parent, joueurs, lines, total, errors, unavailable };
+}
+
+function findOrderNumber_(clientId) {
+  const match = sheet_(SHEETS.commandes).getDataRange().getDisplayValues().find((row) => row[2] === clientId);
+  return match ? match[1] : null;
+}
+
+/** Compteur dans les propriétés du script : il continue même quand « Commandes » est archivé. */
+function nextOrderNumber_() {
+  const properties = PropertiesService.getScriptProperties();
+  const next = Number(properties.getProperty('dernier_numero') || 0) + 1;
+  properties.setProperty('dernier_numero', String(next));
+  return `V-${String(next).padStart(4, '0')}`;
+}
+
+function appendOrder_(orderNumber, clientId, priced) {
+  const sheet = sheet_(SHEETS.commandes);
+  const now = new Date();
+  const parent = priced.parent;
+  const rows = priced.lines.map((line) => [
+    now, orderNumber, text_(clientId),
+    text_(parent.nom), text_(parent.role), text_(parent.telephone), text_(parent.email),
+    text_(line.joueur), text_(line.categorie), text_(line.produit), text_(line.taille),
+    line.quantite, line.prixUnitaire, line.total, '',
+  ]);
+  sheet.getRange(sheet.getLastRow() + 1, 1, rows.length, COMMANDES_HEADERS.length).setValues(rows);
+}
+
+// ---------- Email de confirmation ----------
+
+function sendConfirmation_(orderNumber, priced, settings) {
+  const titre = settings.titre || 'Boutique du club';
+  try {
+    MailApp.sendEmail({
+      to: priced.parent.email,
+      subject: `${titre} : commande ${orderNumber}`,
+      htmlBody: confirmationHtml(orderNumber, priced, settings),
+      name: titre,
+    });
+    return true;
+  } catch (err) {
+    console.error(`Email non envoyé pour ${orderNumber} : ${err}`);
+    return false;
+  }
+}
+
+function confirmationHtml(orderNumber, priced, settings) {
+  const groups = {};
+  priced.lines.forEach((line) => {
+    (groups[line.joueur] = groups[line.joueur] || []).push(line);
+  });
+  const sections = Object.keys(groups).map((joueur) => {
+    const lines = groups[joueur];
+    const heading = joueur ? `${escape_(joueur)} (${escape_(lines[0].categorie)})` : 'Pour moi';
+    const rows = lines.map((line) => {
+      const taille = line.taille === ONE_SIZE ? '' : ` (${escape_(line.taille)})`;
+      return `<tr><td>${line.quantite} × ${escape_(line.produit)}${taille}</td>`
+        + `<td align="right">${euros_(line.total)}</td></tr>`;
+    }).join('');
+    return `<h3 style="margin:16px 0 4px">${heading}</h3><table cellpadding="4" width="100%">${rows}</table>`;
+  }).join('');
+  const payment = settings.lienPaiement
+    ? `<p><a href="${escape_(settings.lienPaiement)}" style="display:inline-block;padding:12px 20px;background:#12357a;`
+      + 'color:#fff;border-radius:8px;text-decoration:none;font-weight:bold">Régler ma commande</a></p>'
+    : '';
+  const warning = settings.messagePaiement ? `<p>${escape_(settings.messagePaiement)}</p>` : '';
+  return `<div style="font-family:sans-serif;max-width:560px">
+<p>Bonjour ${escape_(priced.parent.nom)},</p>
+<p>Nous avons bien reçu votre commande <strong>${orderNumber}</strong>.</p>
+${sections}
+<p style="font-size:18px"><strong>Total : ${euros_(priced.total)}</strong></p>
+${payment}
+${warning}
+</div>`;
+}
+
+function escape_(value) {
+  const entities = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+  return String(value == null ? '' : value).replace(/[&<>"']/g, (c) => entities[c]);
+}
+
+function euros_(amount) {
+  return `${Number.isInteger(amount) ? amount : amount.toFixed(2).replace('.', ',')} €`;
 }
 
 // ---------- Accès à la feuille ----------
