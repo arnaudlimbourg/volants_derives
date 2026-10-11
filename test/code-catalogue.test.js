@@ -58,3 +58,45 @@ test('buildProducts : ignore les inactifs, signale les lignes invalides', () => 
   assert.equal(errors.length, 1);
   assert.match(errors[0], /ligne 4 \(Cassé\)/);
 });
+
+function setup() {
+  const env = createGas();
+  env.gas.setupSheet();
+  return env;
+}
+
+test('setupSheet crée les onglets et le catalogue de départ', () => {
+  const { gas, sheet, warnings } = setup();
+  for (const name of ['Produits', 'Catégories', 'Réglages', 'Commandes', 'Récap']) assert.ok(sheet(name), name);
+  assert.equal(sheet('Commandes').rows[0][1], 'N° commande');
+
+  const catalogue = plain(gas.getCatalogue());
+  assert.equal(catalogue.products.length, 21);
+  assert.deepEqual(warnings, []);
+  assert.equal(catalogue.settings.ouvert, true);
+  assert.equal(catalogue.settings.lienPaiement, 'https://www.onparticipe.fr/c/B11D7skx');
+  assert.ok(catalogue.categories.includes('U11'));
+  assert.deepEqual(catalogue.roles, ['Parent de joueur', 'Joueur', 'Autre']);
+
+  const short = catalogue.products.find((p) => p.nom === 'Short');
+  assert.deepEqual(short.sizes.find((s) => s.label === '8-10 ans'), { label: '8-10 ans', price: 25 });
+  assert.deepEqual(short.sizes.find((s) => s.label === 'Adulte - M'), { label: 'Adulte - M', price: 30 });
+  assert.deepEqual(catalogue.products.find((p) => p.nom === 'Casquette').sizes, [{ label: 'Taille unique', price: 25 }]);
+
+  assert.match(sheet('Récap').formulas['1,1'], /^=QUERY\(Commandes!A:O,/);
+  assert.match(sheet('Récap').formulas['1,6'], /^=QUERY\(Commandes!A:O,/);
+});
+
+test('setupSheet ne réécrit pas un onglet existant', () => {
+  const { gas, sheet } = setup();
+  sheet('Produits').rows[1][0] = 'non';
+  gas.setupSheet();
+  assert.equal(sheet('Produits').rows[1][0], 'non');
+  assert.equal(gas.getCatalogue().products.length, 20);
+});
+
+test('doGet renvoie le catalogue en JSON', () => {
+  const { gas } = setup();
+  const output = gas.doGet();
+  assert.deepEqual(JSON.parse(output.text), plain(gas.getCatalogue()));
+});
