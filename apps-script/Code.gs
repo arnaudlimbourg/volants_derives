@@ -34,7 +34,12 @@ const RECAP_PAR_FAMILLE = '=QUERY(Commandes!A:O, "select B, D, F, G, sum(N) wher
 // ---------- Web app ----------
 
 function doGet() {
-  return json_(getCatalogue());
+  try {
+    return json_(getCatalogue());
+  } catch (err) {
+    console.error(err);
+    return json_({ ok: false, error: 'server', message: 'La boutique est momentanément indisponible, réessayez plus tard.' });
+  }
 }
 
 function doPost(e) {
@@ -61,7 +66,8 @@ function json_(data) {
 
 function getCatalogue() {
   const settings = readSettings_();
-  const built = buildProducts(readTable_(SHEETS.produits));
+  // Valeurs brutes pour les produits : le format d'affichage d'une cellule ne doit pas changer un prix.
+  const built = buildProducts(readTable_(SHEETS.produits, { raw: true }));
   built.errors.forEach((message) => console.warn(message));
   return {
     settings: {
@@ -75,6 +81,8 @@ function getCatalogue() {
     categories: readTable_(SHEETS.categories).map((row) => clean_(row.categorie)).filter(Boolean),
     roles: ROLES,
     products: built.products,
+    // Lignes de « Produits » ignorées : visibles en ouvrant l'URL /exec du script.
+    avertissements: built.errors,
   };
 }
 
@@ -139,8 +147,11 @@ function imageUrl(url) {
 // ---------- Commandes ----------
 
 function placeOrder(order) {
-  // Pot de miel : seul un robot remplit ce champ caché. On lui fait croire que tout va bien.
-  if (clean_(order.website)) return { ok: true, orderNumber: 'V-0000', lines: [], total: 0, emailSent: false };
+  // Pot de miel : seul un robot remplit ce champ caché. Pas de faux succès : si l'autoremplissage
+  // d'un navigateur le remplit, le parent doit savoir que sa commande n'est pas enregistrée.
+  if (clean_(order.website)) {
+    return { ok: false, error: 'invalid', message: "Commande refusée par le filtre anti-robots. Rechargez la page et réessayez." };
+  }
 
   const catalogue = getCatalogue();
   if (!catalogue.settings.ouvert) return { ok: false, error: 'closed', message: 'Les commandes sont fermées.' };
@@ -164,13 +175,16 @@ function placeOrder(order) {
   lock.waitLock(20000);
   let orderNumber;
   try {
-    const existing = findOrderNumber_(clientId);
+    const existing = findOrder_(clientId);
     if (existing) {
-      // Même panier renvoyé (double clic, réseau coupé) : l'email est déjà parti la première fois.
-      return { ok: true, orderNumber: existing, lines: priced.lines, total: priced.total, emailSent: true, duplicate: true };
+      // Commande renvoyée (double clic, réseau coupé) : on renvoie ce qui a été enregistré la première fois,
+      // même si le panier a changé depuis. L'email est déjà parti à ce moment-là.
+      return { ok: true, ...existing, emailSent: true, duplicate: true };
     }
     orderNumber = nextOrderNumber_();
     appendOrder_(orderNumber, clientId, priced);
+    // Sans flush, une requête concurrente peut lire la feuille avant l'écriture et dupliquer la commande.
+    SpreadsheetApp.flush();
   } finally {
     lock.releaseLock();
   }
@@ -242,9 +256,21 @@ function priceOrder(order, catalogue) {
   return { parent, joueurs, lines, total, errors, unavailable };
 }
 
-function findOrderNumber_(clientId) {
-  const match = sheet_(SHEETS.commandes).getDataRange().getDisplayValues().find((row) => row[2] === clientId);
-  return match ? match[1] : null;
+/** La commande déjà enregistrée sous ce clientId, telle qu'elle est dans la feuille. */
+function findOrder_(clientId) {
+  const rows = orderRows_(sheet_(SHEETS.commandes)).filter((row) => String(row[2]) === clientId);
+  if (rows.length === 0) return null;
+  const lines = rows.map((row) => ({
+    joueur: String(row[7]),
+    categorie: String(row[8]),
+    produit: String(row[9]),
+    taille: String(row[10]),
+    quantite: Number(row[11]),
+    prixUnitaire: Number(row[12]),
+    total: Number(row[13]),
+  }));
+  const total = lines.reduce((sum, line) => sum + line.total, 0);
+  return { orderNumber: String(rows[0][1]), lines, total };
 }
 
 /** Compteur dans les propriétés du script : il continue même quand « Commandes » est archivé. */
@@ -263,9 +289,24 @@ function appendOrder_(orderNumber, clientId, priced) {
     now, orderNumber, text_(clientId),
     text_(parent.nom), text_(parent.role), text_(parent.telephone), text_(parent.email),
     text_(line.joueur), text_(line.categorie), text_(line.produit), text_(line.taille),
-    line.quantite, line.prixUnitaire, line.total, '',
+    line.quantite, line.prixUnitaire, line.total,
   ]);
-  sheet.getRange(sheet.getLastRow() + 1, 1, rows.length, COMMANDES_HEADERS.length).setValues(rows);
+  const firstRow = orderRows_(sheet).length + 2;
+  // Colonnes A à N seulement : « Payé » (O) appartient au trésorier, on n'y écrit jamais.
+  sheet.getRange(firstRow, 1, rows.length, rows[0].length).setValues(rows);
+}
+
+/**
+ * Lignes de commande, sans l'en-tête, jusqu'au dernier N° de commande (colonne B).
+ * On ne se fie pas à getLastRow() : des cases à cocher dans « Payé » comptent comme des valeurs.
+ */
+function orderRows_(sheet) {
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) return [];
+  const rows = sheet.getRange(2, 1, lastRow - 1, COMMANDES_HEADERS.length).getValues();
+  let end = rows.length;
+  while (end > 0 && rows[end - 1][1] === '') end -= 1;
+  return rows.slice(0, end);
 }
 
 // ---------- Email de confirmation ----------
@@ -338,8 +379,9 @@ function sheet_(name) {
 }
 
 /** Lit un onglet en objets dont les clés sont les en-têtes normalisés. */
-function readTable_(name) {
-  const values = sheet_(name).getDataRange().getDisplayValues();
+function readTable_(name, options) {
+  const range = sheet_(name).getDataRange();
+  const values = options && options.raw ? range.getValues() : range.getDisplayValues();
   const keys = values[0].map(normalizeKey_);
   return values.slice(1)
     .filter((row) => row.some((cell) => cell !== ''))

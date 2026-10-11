@@ -42,7 +42,7 @@ test('commande valide : lignes écrites, numéro attribué, email envoyé', () =
   assert.equal(Object.prototype.toString.call(rows[0][0]), '[object Date]');
   assert.deepEqual(rows[0].slice(1), [
     'V-0001', 'client-1', 'Camille Martin', 'Parent de joueur', '06 12 34 56 78', 'camille@example.com',
-    'Léo', 'U11', 'Short', '8-10 ans', 2, 25, 50, '',
+    'Léo', 'U11', 'Short', '8-10 ans', 2, 25, 50,
   ]);
   assert.deepEqual(rows[1].slice(7, 14), ['Inès', 'U7', 'Casquette', 'Taille unique', 1, 25, 25]);
 
@@ -68,6 +68,17 @@ test('renvoyer la même commande ne la duplique pas', () => {
   assert.equal(again.duplicate, true);
   assert.equal(orderRows().length, 2);
   assert.equal(mails.length, 1);
+});
+
+test('renvoi après modification du panier : on renvoie la commande enregistrée', () => {
+  const { gas, orderRows } = setup();
+  place(gas, validOrder());
+  const lignes = [{ produit: 'Bonnet', taille: 'Taille unique', quantite: 3, joueur: 'Léo' }];
+  const again = place(gas, validOrder({ lignes }));
+  assert.equal(again.duplicate, true);
+  assert.equal(again.total, 75);
+  assert.deepEqual(again.lines.map((l) => l.produit), ['Short', 'Casquette']);
+  assert.equal(orderRows().length, 2);
 });
 
 test('les prix envoyés par le navigateur sont ignorés', () => {
@@ -144,12 +155,37 @@ test('un article peut être pour le parent lui-même', () => {
   assert.deepEqual(orderRows()[0].slice(7, 10), ['', '', 'Bonnet']);
 });
 
-test('pot de miel rempli : faux succès, rien enregistré', () => {
+test('pot de miel rempli : refus explicite, rien enregistré', () => {
+  // Un refus plutôt qu'un faux succès : si l'autoremplissage du navigateur remplit le champ,
+  // le parent doit le savoir au lieu de croire sa commande enregistrée.
   const { gas, orderRows, mails } = setup();
   const result = place(gas, validOrder({ website: 'http://spam.example' }));
-  assert.equal(result.ok, true);
+  assert.equal(result.ok, false);
+  assert.equal(result.error, 'invalid');
+  assert.match(result.message, /Rechargez la page/);
   assert.equal(orderRows().length, 0);
   assert.equal(mails.length, 0);
+});
+
+test('des cases à cocher dans « Payé » ne repoussent pas les commandes en bas de la feuille', () => {
+  const { gas, sheet } = setup();
+  for (let row = 1; row < 50; row += 1) (sheet('Commandes').rows[row] = [])[14] = false;
+  place(gas, validOrder());
+  const rows = sheet('Commandes').rows;
+  assert.equal(rows[1][1], 'V-0001');
+  assert.equal(rows[2][1], 'V-0001');
+  assert.equal(rows[2][14], false);
+  assert.equal(rows.length, 50);
+  assert.equal(place(gas, validOrder()).duplicate, true);
+  place(gas, validOrder({ clientId: 'client-2' }));
+  assert.equal(rows[3][1], 'V-0002');
+});
+
+test("l'en-tête de « Commandes » n'est jamais pris pour une commande", () => {
+  const { gas } = setup();
+  const result = place(gas, validOrder({ clientId: 'Client ID' }));
+  assert.equal(result.orderNumber, 'V-0001');
+  assert.equal(result.duplicate, undefined);
 });
 
 test('les textes saisis ne peuvent pas devenir des formules ni casser l’email', () => {

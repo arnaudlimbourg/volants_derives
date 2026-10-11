@@ -43,6 +43,10 @@ test('cartCount et cartTotal', () => {
   assert.equal(cartTotal(lines), 75);
 });
 
+test('cartTotal ignore les lignes indisponibles', () => {
+  assert.equal(cartTotal([{ ...short, quantite: 2 }, { ...casquette, indisponible: true }]), 50);
+});
+
 test("groupByPlayer garde l'ordre d'ajout", () => {
   const other = { ...short, produit: 'Sweat' };
   assert.deepEqual(groupByPlayer([short, casquette, other]), [
@@ -54,6 +58,11 @@ test("groupByPlayer garde l'ordre d'ajout", () => {
 test('renamePlayer et removePlayer', () => {
   assert.equal(renamePlayer([short, casquette], 'Léo', 'Léon')[0].joueur, 'Léon');
   assert.deepEqual(removePlayer([short, casquette], 'Léo'), [casquette]);
+});
+
+test('renamePlayer vers un nom existant fusionne les lignes identiques', () => {
+  const merged = renamePlayer([short, { ...short, joueur: 'Léon', quantite: 2 }], 'Léo', 'Léon');
+  assert.deepEqual(merged, [{ ...short, joueur: 'Léon', quantite: 3 }]);
 });
 
 test('markUnavailable signale les lignes indisponibles', () => {

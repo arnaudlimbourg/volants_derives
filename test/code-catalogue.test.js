@@ -107,3 +107,30 @@ test('fixtures/catalogue.json correspond au catalogue de départ (npm run fixtur
   const { gas } = setup();
   assert.deepEqual(fixture, plain(gas.getCatalogue()));
 });
+
+test('doGet : feuille mal configurée → erreur JSON lisible', () => {
+  const { gas, sheets } = setup();
+  sheets.delete('Réglages');
+  const body = JSON.parse(gas.doGet().text);
+  assert.equal(body.ok, false);
+  assert.equal(body.error, 'server');
+  assert.match(body.message, /indisponible/);
+});
+
+test('les prix sont lus en valeur brute, pas selon le format de la cellule', () => {
+  const { gas, sheet } = setup();
+  const bonnet = sheet('Produits').rows.findIndex((row) => row[2] === 'Bonnet');
+  sheet('Produits').rows[bonnet][3] = 7.5;
+  sheet('Produits').formats[`${bonnet + 1},4`] = () => '8';
+  const product = gas.getCatalogue().products.find((p) => p.nom === 'Bonnet');
+  assert.equal(product.sizes[0].price, 7.5);
+});
+
+test('les lignes de produit invalides sont listées dans « avertissements »', () => {
+  const { gas, sheet } = setup();
+  sheet('Produits').rows.find((row) => row[2] === 'Bonnet')[3] = '';
+  const catalogue = plain(gas.getCatalogue());
+  assert.equal(catalogue.products.length, 20);
+  assert.equal(catalogue.avertissements.length, 1);
+  assert.match(catalogue.avertissements[0], /Bonnet/);
+});

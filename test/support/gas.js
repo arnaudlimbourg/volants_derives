@@ -13,6 +13,8 @@ class FakeSheet {
     this.rows = [];
     this.formulas = {};
     this.frozenRows = 0;
+    this.formats = {}; // 'ligne,colonne' → (valeur) => texte affiché, comme un format de cellule
+
   }
 
   getLastRow() {
@@ -25,12 +27,20 @@ class FakeSheet {
       Array.from({ length: width }, (_, i) => (row[i] === undefined ? '' : row[i])));
     return {
       getValues: () => grid.map((row) => [...row]),
-      getDisplayValues: () => grid.map((row) => row.map((v) => (isDate(v) ? v.toISOString() : String(v)))),
+      getDisplayValues: () => grid.map((row, r) => row.map((v, c) => {
+        const format = this.formats[`${r + 1},${c + 1}`];
+        if (format) return format(v);
+        return isDate(v) ? v.toISOString() : String(v);
+      })),
     };
   }
 
   getRange(row, column, numRows = 1, numColumns = 1) {
     return {
+      getValues: () => Array.from({ length: numRows }, (_, i) => Array.from({ length: numColumns }, (__, j) => {
+        const value = (this.rows[row - 1 + i] || [])[column - 1 + j];
+        return value === undefined ? '' : value;
+      })),
       setValues: (values) => {
         if (values.length !== numRows || values.some((v) => v.length !== numColumns)) {
           throw new Error(`Dimensions invalides : ${values.length}×${values[0]?.length} pour ${numRows}×${numColumns}`);
@@ -71,7 +81,7 @@ export function createGas() {
   };
 
   const context = vm.createContext({
-    SpreadsheetApp: { getActiveSpreadsheet: () => spreadsheet },
+    SpreadsheetApp: { getActiveSpreadsheet: () => spreadsheet, flush() {} },
     LockService: { getScriptLock: () => ({ waitLock() {}, releaseLock() {} }) },
     PropertiesService: {
       getScriptProperties: () => ({

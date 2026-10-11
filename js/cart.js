@@ -23,7 +23,8 @@ export const removeLine = (lines, key) => lines.filter((l) => lineKey(l) !== key
 
 export const cartCount = (lines) => lines.reduce((count, l) => count + l.quantite, 0);
 
-export const cartTotal = (lines) => lines.reduce((sum, l) => sum + l.prix * l.quantite, 0);
+// Les lignes indisponibles restent visibles (pour pouvoir les retirer) mais ne comptent plus.
+export const cartTotal = (lines) => lines.reduce((sum, l) => (l.indisponible ? sum : sum + l.prix * l.quantite), 0);
 
 export function groupByPlayer(lines) {
   const groups = new Map();
@@ -34,7 +35,9 @@ export function groupByPlayer(lines) {
   return [...groups].map(([joueur, items]) => ({ joueur, lines: items }));
 }
 
-export const renamePlayer = (lines, from, to) => lines.map((l) => (l.joueur === from ? { ...l, joueur: to } : l));
+// Renommer vers un nom déjà utilisé fusionne les lignes identiques au lieu de dupliquer leur clé.
+export const renamePlayer = (lines, from, to) =>
+  lines.reduce((merged, l) => addLine(merged, l.joueur === from ? { ...l, joueur: to } : l), []);
 
 export const removePlayer = (lines, nom) => lines.filter((l) => l.joueur !== nom);
 

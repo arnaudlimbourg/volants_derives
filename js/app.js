@@ -1,6 +1,6 @@
-import { loadCatalogue, sendOrder, isDemo } from './api.js';
+import { loadCatalogue, sendOrder, isDemo, ShopError } from './api.js';
 import {
-  addLine, setQuantity, removeLine, cartCount, cartTotal, groupByPlayer, renamePlayer, removePlayer,
+  addLine, setQuantity, cartCount, cartTotal, groupByPlayer, renamePlayer, removePlayer,
   markUnavailable, toOrderLines, priceLabel, formatEuro, lineKey, MAX_QUANTITY, ONE_SIZE,
 } from './cart.js';
 
@@ -93,7 +93,7 @@ async function start() {
     state.catalogue = await loadCatalogue();
   } catch (err) {
     console.error(err);
-    showStatus(`Impossible de charger la boutique. ${err.message.includes('config.js') ? err.message : 'Vérifiez votre connexion.'}`, { retry: true });
+    showStatus(`Impossible de charger la boutique. ${err instanceof ShopError ? err.message : 'Vérifiez votre connexion.'}`, { retry: true });
     return;
   }
 
@@ -163,18 +163,24 @@ function renderPlayers() {
       placeholder: 'Prénom et nom',
       autocomplete: 'off',
       'aria-label': `Nom du joueur ${index + 1}`,
-      oninput: (e) => { joueur.nom = e.target.value; save(); },
+      // Pas de save() ici : les articles ne suivent le nouveau nom qu'au change, enregistrer avant
+      // laisserait des articles orphelins si la page est rechargée en pleine saisie.
+      oninput: (e) => { joueur.nom = e.target.value; },
       onchange: (e) => {
         const nom = e.target.value.trim();
         e.target.value = nom;
         joueur.nom = nom;
+        let renamed = null;
         // Nom effacé : les articles restent attribués à l'ancien nom, le serveur le signalera.
-        if (nom) {
+        // Premier nom saisi : les articles « Pour moi » ajoutés avant le suivent, mais pas ceux
+        // que le parent a choisis pour lui alors qu'un autre joueur existait déjà.
+        if (nom && (previousName || namedPlayers().length === 1)) {
           state.lines = renamePlayer(state.lines, previousName, nom);
-          previousName = nom;
+          renamed = { from: previousName, to: nom };
         }
+        if (nom) previousName = nom;
         save();
-        refreshPlayerSelects();
+        refreshPlayerSelects(renamed);
         renderCart();
       },
     });
@@ -214,11 +220,12 @@ function playerOptions(selected) {
   ];
 }
 
-function refreshPlayerSelects() {
+function refreshPlayerSelects(renamed = null) {
   const first = namedPlayers()[0]?.nom ?? '';
   document.querySelectorAll('select[name="joueur"]').forEach((select) => {
     // Tant que le parent n'a pas choisi lui-même, on propose le premier joueur.
-    select.replaceChildren(...playerOptions(select.dataset.touched ? select.value : first));
+    const chosen = renamed && select.value === renamed.from ? renamed.to : select.value;
+    select.replaceChildren(...playerOptions(select.dataset.touched ? chosen : first));
   });
 }
 
@@ -272,13 +279,18 @@ function productCard(product) {
       toast('Choisissez une taille.');
       return;
     }
-    const quantite = Math.max(1, Math.min(MAX_QUANTITY, Number.parseInt(quantity.value, 10) || 1));
-    const prix = product.sizes.find((s) => s.label === taille).price;
-    state.lines = addLine(state.lines, { produit: product.nom, taille, joueur: playerSelect.value, quantite, prix });
+    const line = { produit: product.nom, taille, joueur: playerSelect.value, quantite: Number.parseInt(quantity.value, 10) || 1 };
+    line.prix = product.sizes.find((s) => s.label === taille).price;
+    const key = lineKey(line);
+    const before = state.lines.find((l) => lineKey(l) === key)?.quantite ?? 0;
+    state.lines = addLine(state.lines, line); // addLine plafonne la quantité
+    const after = state.lines.find((l) => lineKey(l) === key).quantite;
     save();
     renderCart();
     quantity.value = 1;
-    toast(`${product.nom} ajouté au panier`);
+    toast(after < before + line.quantite
+      ? `${product.nom} : ${MAX_QUANTITY} maximum, quantité ajustée à ${after}`
+      : `${product.nom} ajouté au panier`);
   };
 
   return el('article', { class: 'product' },
@@ -349,6 +361,13 @@ function setCartError(message) {
 
 async function submitOrder() {
   setCartError('');
+  // Une ligne de joueur laissée vide (commande pour soi) ne doit pas bloquer la validation.
+  const filled = state.joueurs.filter((joueur) => joueur.nom.trim() || joueur.categorie);
+  if (filled.length !== state.joueurs.length) {
+    state.joueurs = filled;
+    save();
+    renderPlayers();
+  }
   const form = $('#famille-form');
   if (!form.checkValidity()) {
     $('#cart').close();
@@ -366,7 +385,7 @@ async function submitOrder() {
   try {
     const result = await sendOrder({
       clientId: state.clientId,
-      website: $('#website').value,
+      website: $('#fv-piege').value,
       parent: state.parent,
       joueurs: namedPlayers(),
       lignes: toOrderLines(state.lines),

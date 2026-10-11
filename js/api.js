@@ -25,10 +25,13 @@ export async function sendOrder(order) {
   return response.json();
 }
 
+/** Erreur dont le message peut être montré tel quel (les autres sont des problèmes de réseau). */
+export class ShopError extends Error {}
+
 function apiUrl() {
   const url = window.CONFIG?.apiUrl || '';
   if (!url.startsWith('https://script.google.com/')) {
-    throw new Error("L'adresse du serveur n'est pas renseignée dans config.js.");
+    throw new ShopError("L'adresse du serveur n'est pas renseignée dans config.js.");
   }
   return url;
 }
@@ -36,7 +39,10 @@ function apiUrl() {
 async function getJson(url) {
   const response = await fetch(url);
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
-  return response.json();
+  const data = await response.json();
+  if (data.ok === false) throw new ShopError(data.message);
+  if (data.avertissements?.length) console.warn('Produits ignorés :', data.avertissements);
+  return data;
 }
 
 async function fakeOrder(order) {
