@@ -1,0 +1,10 @@
+{
+  "name": "volants-derives",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "fixture": "node scripts/build-fixture.mjs",
+    "dev": "python3 -m http.server 8000"
+  }
+}
