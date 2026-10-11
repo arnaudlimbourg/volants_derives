@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>Boutique des Français Volants</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="style.css">
+  <script src="config.js"></script>
+  <script type="module" src="js/app.js"></script>
+</head>
+<body>
+  <p id="demo-banner" class="demo-banner" hidden>Mode démo : les commandes ne sont pas enregistrées.</p>
+
+  <header class="hero">
+    <div class="hero-inner">
+      <h1 id="titre">Boutique des Français Volants</h1>
+      <p id="intro" class="intro"></p>
+      <p id="cloture" class="deadline" hidden></p>
+    </div>
+  </header>
+
+  <main>
+    <div id="status" class="status" role="status"></div>
+
+    <section id="famille" class="panel" hidden>
+      <h2><span class="step" aria-hidden="true">1</span>Vos coordonnées</h2>
+      <form id="famille-form">
+        <div class="fields">
+          <label>Nom et prénom
+            <input name="nom" required autocomplete="name">
+          </label>
+          <label>Vous êtes
+            <select name="role" required></select>
+          </label>
+          <label>Téléphone
+            <input name="telephone" type="tel" required autocomplete="tel" minlength="8">
+          </label>
+          <label>Email
+            <input name="email" type="email" required autocomplete="email">
+          </label>
+        </div>
+
+        <h3>Joueurs</h3>
+        <p class="hint">Ajoutez chaque enfant, ou vous-même si vous jouez : vous choisirez pour qui est chaque article.</p>
+        <div id="joueurs"></div>
+        <button type="button" id="add-joueur" class="button">Ajouter un joueur</button>
+
+        <label class="honeypot" aria-hidden="true">Site web
+          <input id="website" name="website" tabindex="-1" autocomplete="off">
+        </label>
+      </form>
+    </section>
+
+    <section id="boutique" hidden>
+      <h2><span class="step" aria-hidden="true">2</span>Les articles</h2>
+      <div id="sections"></div>
+    </section>
+
+    <section id="confirmation" class="panel" hidden></section>
+  </main>
+
+  <div id="cart-bar" class="cart-bar" hidden>
+    <button type="button" id="open-cart" class="button primary">
+      <span><span id="cart-count"></span>, <span id="cart-total"></span></span>
+      <span>Voir le panier</span>
+    </button>
+  </div>
+
+  <dialog id="cart" aria-labelledby="cart-title">
+    <div class="dialog-header">
+      <h2 id="cart-title">Votre panier</h2>
+      <button type="button" id="close-cart" class="icon-button" aria-label="Fermer le panier">×</button>
+    </div>
+    <div id="cart-lines"></div>
+    <p class="summary-total"><span>Total</span><strong id="cart-sum"></strong></p>
+    <p id="cart-error" class="error" role="alert" hidden></p>
+    <p class="hint">Le règlement se fait après la commande, avec le lien de paiement du club.</p>
+    <button type="button" id="submit" class="button primary large">Commander</button>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" hidden></div>
+</body>
+</html>
